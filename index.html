@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download File</title>
+    <style>
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom right, #1c1c3c, #24246a, #3d3dbb);
+            color: #ffffff;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .container {
+            text-align: center;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #ffdd57;
+            text-shadow: 0 3px 10px rgba(255, 221, 87, 0.7);
+        }
+
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: #dddddd;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 30px;
+            margin: 10px;
+            background: linear-gradient(90deg, #ff7b00, #ff007a);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(255, 123, 0, 0.5);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .download-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(255, 123, 0, 0.7);
+        }
+
+        .download-btn i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #ffffff;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            font-size: 1rem;
+            animation: fadeout 3s forwards;
+        }
+
+        @keyframes fadeout {
+            0% {
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <canvas></canvas>
+    <div class="container">
+        <h1>Download File</h1>
+        <p>Pilih file yang ingin Anda download:</p>
+        <a href="Composer-Setup.exe" class="download-btn" onclick="showNotification('Download Composer dimulai...')"
+            download>
+            <i class="fas fa-download"></i> Download Composer
+        </a>
+        <a href="https://github.com/leokhoa/laragon/releases/download/6.0.0/laragon-wamp.exe" class="download-btn"
+            onclick="showNotification('Download Laragon dimulai...')" download>
+            <i class="fas fa-download"></i> Download Laragon
+        </a>
+    </div>
+
+    <script>
+        // Function to show a notification
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.classList.add('notification');
+            notification.textContent = message;
+
+            // Append it to the body
+            document.body.appendChild(notification);
+
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        const canvas = document.querySelector("canvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+        let mouseParticles = [];
+
+        function drawStar(x, y, radius, points, inset, color) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            for (let i = 0; i < points * 2; i++) {
+                const angle = Math.PI * i / points;
+                const r = i % 2 === 0 ? radius : radius * inset;
+                ctx.lineTo(x + r * Math.cos(angle), y + r * Math.sin(angle));
+            }
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        function Particle(x, y, size, color, velocityX, velocityY) {
+            this.x = x;
+            this.y = y;
+            this.size = size;
+            this.color = color;
+            this.velocityX = velocityX;
+            this.velocityY = velocityY;
+        }
+
+        Particle.prototype.draw = function () {
+            drawStar(this.x, this.y, this.size, 5, 0.5, this.color);
+        };
+
+        Particle.prototype.update = function () {
+            this.x += this.velocityX;
+            this.y += this.velocityY;
+
+            // Reset particle if it moves out of bounds
+            if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.velocityX = (Math.random() - 0.5) * 0.5;
+                this.velocityY = (Math.random() - 0.5) * 0.5;
+            }
+        };
+
+        function createRandomParticles(count) {
+            for (let i = 0; i < count; i++) {
+                let x = Math.random() * canvas.width;
+                let y = Math.random() * canvas.height;
+                let size = Math.random() * 3 + 1;
+                let velocityX = (Math.random() - 0.5) * 0.5;
+                let velocityY = (Math.random() - 0.5) * 0.5;
+                let color = `rgba(255,255,255,${Math.random()})`;
+
+                particles.push(new Particle(x, y, size, color, velocityX, velocityY));
+            }
+        }
+
+        function addMouseParticles(x, y) {
+            for (let i = 0; i < 5; i++) {
+                let size = Math.random() * 5 + 1;
+                let velocityX = (Math.random() - 0.5) * 2;
+                let velocityY = (Math.random() - 0.5) * 2;
+                let color = `rgba(255,255,0,${Math.random()})`;
+
+                mouseParticles.push(new Particle(x, y, size, color, velocityX, velocityY));
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update random particles
+            particles.forEach((particle) => {
+                particle.update();
+                particle.draw();
+            });
+
+            // Update mouse particles
+            mouseParticles.forEach((particle, index) => {
+                particle.update();
+                particle.draw();
+
+                if (particle.size <= 0.1) {
+                    mouseParticles.splice(index, 1);
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener("mousemove", (e) => {
+            addMouseParticles(e.clientX, e.clientY);
+        });
+
+        window.addEventListener("resize", () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Create initial random particles
+        createRandomParticles(100);
+
+        // Permanently add more random particles over time
+        setInterval(() => createRandomParticles(1), 100);
+
+        animate();
+    </script>
+</body>
+
+</html>
